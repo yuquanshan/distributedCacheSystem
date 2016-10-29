@@ -27,6 +27,7 @@ void *get_in_addr(struct sockaddr *sa){	// get IP address
 v_t *get(k_t *key, int sockfd){
 	char msg[BUFSIZE];
 	char buf[BUFSIZE];
+	int tid = (int)pthread_self();
 	v_t *res = malloc(1);
 	int numbytes;
 	memset(msg,'\0',80);
@@ -40,7 +41,7 @@ v_t *get(k_t *key, int sockfd){
 		exit(1);
 	}
 	buf[numbytes] = '\0';
-	printf("client: received '%s'\n", buf);
+	printf("[%d]client: received '%s'\n", tid, buf);
 	*res = buf[numbytes-1];
 	return res;
 }
@@ -49,6 +50,7 @@ int put(k_t *key, v_t *val, int sockfd){
 	char msg[BUFSIZE];
 	char buf[BUFSIZE];
 	int numbytes;
+	int tid = (int)pthread_self();
 	memset(msg,'\0',80);
 	sprintf(msg,"PUT:%c%c",*key,*val);
 	if((numbytes = send(sockfd,msg,strlen(msg),0)) == -1){
@@ -60,11 +62,11 @@ int put(k_t *key, v_t *val, int sockfd){
 		exit(1);
 	}
 	buf[numbytes] = '\0';
-	printf("client: received '%s'\n", buf);
+	printf("[%d]client: received '%s'\n", tid, buf);
 	return 0;
 }
 
-double exponential_gen(int lambda){
+double exponential_gen(float lambda){
 	srand(time(NULL));
 	int rv = rand()%10000;
 	double u = ((double)rv)/10000;
@@ -87,10 +89,10 @@ char *rand_reqest_gen(){	// generate random request
 	}
 }
 
-void client_thread(void *arg1){
+void *client_thread(void *arg1){
 	arg_t *arg = (arg_t*)arg1;
 	int snum = arg->nsession;
-	int lambda = arg->lambda;
+	float lambda = arg->lambda;
 	int rnum = arg->nreq;
 	int i,j,rv;
 	int sockfd;
@@ -98,6 +100,7 @@ void client_thread(void *arg1){
 	char s[INET_ADDRSTRLEN];
 	const char* addr = arg->iaddr;
 	struct addrinfo hints, *p, *servinfo;
+	int tid = (int)pthread_self();
 
 	k_t *key = malloc(1);
 	v_t *val = malloc(1);
@@ -116,8 +119,9 @@ void client_thread(void *arg1){
 		int usec = ((int)(tmp*1000000))%1000000;
 		sleep(sec);
 		usleep(usec);
+		srand(time(NULL));
 		if((rv = getaddrinfo(addr,PORT,&hints,&servinfo)) != 0){
-			fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
+			fprintf(stderr, "[%d]getaddrinfo: %s\n", tid, gai_strerror(rv));
 			pthread_exit(NULL);
 		}
 		for(p = servinfo; p != NULL; p = p->ai_next){	// pick first type of socket available
@@ -133,11 +137,11 @@ void client_thread(void *arg1){
 			break;
 		}
 		if(p == NULL){
-			fprintf(stderr, "client: failed to connect\n");
+			fprintf(stderr, "[%d]client: failed to connect\n", tid);
 			break;
 		}	
 		inet_ntop(p->ai_family,get_in_addr((struct sockaddr *)p->ai_addr),s,sizeof s);
-		printf("client: connecting to %s\n",s);
+		printf("[%d]client: connecting to %s\n",tid, s);
 		freeaddrinfo(servinfo);
 		for(j = 0; j < rnum; j++){
 			if(rand()%2 == 0){	// PUT command	
@@ -146,15 +150,16 @@ void client_thread(void *arg1){
 				//memcpy(key,req+rand()%79,1);
 				//memcpy(val,req+rand()%79,1);
 				put(key,val,sockfd);
-				printf("put request: put <%c,%c>\n", *key, *val);
+				printf("[%d]put request: put <%c,%c>\n", tid, *key, *val);
 			}else{				// GET command
 				key = char_pool+rand()%79;
-				printf("get request: get %c\n", *key);
+				printf("[%d]get request: get %c\n", tid, *key);
 				v_t *tmpval = get(key,sockfd);
 			}
 		}
 		close(sockfd);		
 	}
+	return NULL;
 }
 
 /**
@@ -166,108 +171,24 @@ void client_thread(void *arg1){
 */
 
 int main(int argc, char const *argv[])
-{
+{	
+	if (argc != 6){
+		printf("usage: client <server_ip> <num_of_threads> <session_rate> <session_per_thread> <request_per_session>\n");
+	}
 	arg_t* arg = malloc(sizeof(arg_t));
+	int thread_num = (int)strtol(argv[2],NULL,10);
+	int i;
+	pthread_t *p = malloc(thread_num*sizeof(pthread_t));
 	arg->iaddr = argv[1];
-	arg->lambda = (int)strtol(argv[3],NULL,10);
+	arg->lambda = (float)strtol(argv[3],NULL,10);
 	arg->nsession = (int)strtol(argv[4],NULL,10);
 	arg->nreq = (int)strtol(argv[5],NULL,10);
 
-	client_thread(arg);
-	/*char buf[BUFSIZE];
-	char s[INET_ADDRSTRLEN];
-	char *msg1 = "PUT:a1";
-	char *msg2 = "GET:a";
-	char *msg3 = "GET:b";
-	memset(buf,'\0',BUFSIZE);
-	struct addrinfo hints, *p, *servinfo;
-	int sockfd;
-	int rv;
-	int numbytes;
-
-	memset(&hints, 0, sizeof hints);
-	hints.ai_family = AF_UNSPEC;
-	hints.ai_socktype = SOCK_STREAM;
-
-	if((rv = getaddrinfo("127.0.0.1",PORT,&hints,&servinfo)) != 0){
-		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
-		return 1;
+	for(i = 0; i<thread_num; i++){
+		pthread_create(p+i*sizeof(pthread_t),NULL,client_thread,arg);
 	}
-
-	for(p = servinfo; p != NULL; p = p->ai_next){	// pick first type of socket available
-		if((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1){
-			perror("client: socket");
-			continue;
-		}
-		if(connect(sockfd, p->ai_addr, p->ai_addrlen) == -1){
-			close(sockfd);
-			perror("client: connect");
-			continue;
-		}
-		break;
+	for(i = 0; i<thread_num; i++){
+		pthread_join(p[0],NULL);
 	}
-
-	if(p == NULL){
-		fprintf(stderr, "client: failed to connect\n");
-		return 2;
-	}
-
-	inet_ntop(p->ai_family,get_in_addr((struct sockaddr *)p->ai_addr),s,sizeof s);
-	printf("client: connecting to %s\n",s);
-
-	freeaddrinfo(servinfo);
-	k_t *key = malloc(1);
-	v_t *val = malloc(1);
-	memcpy(key,"a",1);
-	memcpy(val,"1",1);
-
-	put(key,val,sockfd);
-	v_t *tmpval = get(key,sockfd);
-	printf("main: %c\n",*tmpval);
-	*/
-/*	if((numbytes = send(sockfd,msg1,6,0)) == -1){
-		perror("send");
-		exit(1);
-	}
-	//printf("send out %d bytes\n",numbytes);
-	if((numbytes = recv(sockfd,buf,BUFSIZE-1,0)) == -1){
-		perror("recv");
-		exit(1);
-	}
-	buf[numbytes] = '\0';
-
-	printf("client: received '%s'\n", buf);
-
-//////////////////////////////////////////////////
-	
-	if((numbytes = send(sockfd,msg2,5,0)) == -1){
-		perror("send");
-		exit(1);
-	}
-	//printf("send out %d bytes\n",numbytes);
-	if((numbytes = recv(sockfd,buf,BUFSIZE-1,0)) == -1){
-		perror("recv");
-		exit(1);
-	}
-	buf[numbytes] = '\0';
-
-	printf("client: received '%s'\n", buf);
-
-//////////////////////////////////////////////////
-	
-	if((numbytes = send(sockfd,msg3,5,0)) == -1){
-		perror("send");
-		exit(1);
-	}
-	//printf("send out %d bytes\n",numbytes);
-	if((numbytes = recv(sockfd,buf,BUFSIZE-1,0)) == -1){
-		perror("recv");
-		exit(1);
-	}
-	buf[numbytes] = '\0';
-
-	printf("client: received '%s'\n", buf);
-*/
-	//close(sockfd);
 	return 0;
 }

@@ -45,7 +45,7 @@ int main(int argc, char const *argv[]){
 	struct sockaddr_storage remoteaddr;
 	socklen_t addrlen;
 
-	char buf[256];
+	char buf[BUFSIZE];
 	int nbytes;
 
 	char remoteIP[INET6_ADDRSTRLEN];
@@ -101,7 +101,7 @@ int main(int argc, char const *argv[]){
 			exit(4);
 		}
 		for(i = 0; i <= fdmax; i++){
-			memset(buf,'\0',256);
+			memset(buf,'\0',BUFSIZE);
 			if(FD_ISSET(i, &read_fds)){
 				if(i == listener){	// new connection request
 					addrlen = sizeof remoteaddr;
