@@ -2,7 +2,7 @@
 
 #define MAX_SESSIONS 10000
 #define HASH_ENTRY_SIZE 50
-#define BUFSIZE 1024
+#define BUFSIZE 100
 
 typedef char k_t;
 typedef char v_t;
@@ -22,7 +22,7 @@ typedef struct thread_arg{	// input argument of client thread
 } arg_t;
 
 node_t* initialize_hashtable(){
-	node_t* heads = malloc(HASH_ENTRY_SIZE*sizeof(node_t));
+	node_t* heads = (node_t *)malloc(HASH_ENTRY_SIZE*sizeof(node_t));
 	int i;
 	node_t *tmp;
 	for(i = 0; i<HASH_ENTRY_SIZE; i++){	
@@ -64,7 +64,7 @@ void put_node(k_t key, v_t val, node_t *heads){
 	if(node != NULL){
 		node->val = val;
 	}else{
-		node = malloc(sizeof(node_t));
+		node = (node_t *)malloc(sizeof(node_t));
 		node->key = key;
 		node->val = val;
 		node->next = NULL;
