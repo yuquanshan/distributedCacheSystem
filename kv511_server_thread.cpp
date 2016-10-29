@@ -20,7 +20,6 @@ node_t *heads = initialize_hashtable();
 void *pthread_function(void *);
 
 int get_or_put(const char* buf){	// return 0 if get, 1 if put, -1 if N/A
-	int i;
 	char *getstr = "GET";
 	char *putstr = "PUT";
 	char box[4];
@@ -36,7 +35,6 @@ int get_or_put(const char* buf){	// return 0 if get, 1 if put, -1 if N/A
 
 int main(int argc , char *argv[])
 {
-    char *msg;
     int socket_descriptor, new_socket, c, *new_socket_thread;
     struct sockaddr_in server, client;
 
@@ -95,13 +93,12 @@ void *pthread_function(void *socket_descriptor)
 
     int parse;
     k_t key;
-    v_t val;
     node_t* res;
 
     //Receive a msg from client
     while((read_size = recv(sock, buf, BUFSIZE, 0)) > 0)
     {
-        int parse = get_or_put(buf);
+        parse = get_or_put(buf);
         if(parse == 0){ 	// get
             key = buf[4];
             mutex.lock();
