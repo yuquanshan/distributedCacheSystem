@@ -34,6 +34,7 @@ int get_or_put(const char* buf){	// return 0 if get, 1 if put, -1 if N/A
 }
 
 int main(int argc, char const *argv[]){
+	int session_counter = 0;
 	char msg[80];
 	char *invalid_cmd = "invalid command";
 	fd_set master;
@@ -104,26 +105,33 @@ int main(int argc, char const *argv[]){
 			memset(buf,'\0',BUFSIZE);
 			if(FD_ISSET(i, &read_fds)){
 				if(i == listener){	// new connection request
-					addrlen = sizeof remoteaddr;
-					newfd = accept(listener, (struct sockaddr *)&remoteaddr, &addrlen);
-					if(newfd == -1){
-						perror("accept");
-					}else{
-						FD_SET(newfd, &master);
-						if(newfd > fdmax){
-							fdmax = newfd;
+					if(session_counter <= MAX_SESSIONS){
+						addrlen = sizeof remoteaddr;
+						newfd = accept(listener, (struct sockaddr *)&remoteaddr, &addrlen);
+						if(newfd == -1){
+							perror("accept");
+						}else{
+							FD_SET(newfd, &master);
+							if(newfd > fdmax){
+								fdmax = newfd;
+							}
+							printf("server: new connection from %s on socket %d\n", inet_ntop(remoteaddr.ss_family, get_in_addr((struct sockaddr*)&remoteaddr),remoteIP, INET6_ADDRSTRLEN), newfd);
+							session_counter++;	// increase the session counter
+							printf("number of sessions: %d\n", session_counter);
 						}
-						printf("selectserver: new connection from %s on socket %d\n", inet_ntop(remoteaddr.ss_family, get_in_addr((struct sockaddr*)&remoteaddr),remoteIP, INET6_ADDRSTRLEN), newfd);
+					}else{
+						printf("server: connection refused, cannot serve more than %d sessions\n", session_counter);
 					}
 				}else{
 					if((nbytes = recv(i,buf,sizeof buf, 0)) <= 0){
 						if(nbytes == 0){
-							printf("selectserver: socket %d hung up\n",i);
+							printf("server: socket %d hung up\n",i);
 						}else{
 							perror("recv");
 						}
 						close(i);
 						FD_CLR(i,&master);
+						session_counter--;	// decrease the session counter
 					}else{
 						/*if(send(i,buf,nbytes,0) == -1){
 							perror("send");

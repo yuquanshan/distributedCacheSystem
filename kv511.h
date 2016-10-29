@@ -1,6 +1,6 @@
 #include <stdlib.h>
 
-#define MAX_SESSIONS 10000
+#define MAX_SESSIONS 100
 #define HASH_ENTRY_SIZE 50
 #define BUFSIZE 100
 
@@ -38,16 +38,16 @@ int divhash_func(k_t key){	// very simple division-based hash
 }
 
 node_t* get_node(k_t key, node_t *heads){	// find the node with key, return NULL if no such node
-	//printf("trying to get key %c...\n",key);
+	printf("trying to get key %c...\n",key);
 	node_t* res = NULL;
 	int entry = divhash_func(key);
 	node_t* tmp;
 	if((heads+entry*sizeof(node_t))->empty != 1){
 		tmp = (heads+entry*sizeof(node_t))->next;
 		while(tmp != NULL){
-			//printf("-------- met key %c\n",tmp->key);
+			printf("-------- met key %c\n",tmp->key);
 			if(tmp->key == key){
-				//printf("find key %c, its value is %c\n", key, tmp->val);
+				printf("find key %c, its value is %c\n", key, tmp->val);
 				return tmp;
 			}
 			tmp = tmp->next;
@@ -58,7 +58,7 @@ node_t* get_node(k_t key, node_t *heads){	// find the node with key, return NULL
 }
 
 void put_node(k_t key, v_t val, node_t *heads){
-	//printf("trying to put key-value pair: <%c,%c>...\n",key,val);
+	printf("trying to put key-value pair: <%c,%c>...\n",key,val);
 	int entry = divhash_func(key);
 	node_t* node = get_node(key,heads);
 	if(node != NULL){
@@ -72,6 +72,7 @@ void put_node(k_t key, v_t val, node_t *heads){
 		tmp->empty = 0;	// not empty no more
 		while(tmp->next != NULL){
 			tmp = tmp->next;
+			printf("yeepee!\n");
 		}
 		tmp->next = node;
 	}
