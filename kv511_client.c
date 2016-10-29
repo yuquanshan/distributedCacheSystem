@@ -7,13 +7,13 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
-#include <Math.h>
+#include <math.h>
 #include <time.h>
 #include <pthread.h>
 #include "kv511.h"
 
 #define PORT "9088"
-#define BUFSIZE 100
+//#define BUFSIZE 100
 
 char* char_pool = "1234567890!@#$^&*()abcdefghijklmnopqrstuvwsyzABCDEFGHIJKLMNOPQISTUVWXYZ,./;':<>?";
 
@@ -67,7 +67,7 @@ int put(k_t *key, v_t *val, int sockfd){
 }
 
 double exponential_gen(float lambda){
-	srand(time(NULL));
+	srand(time(NULL)+(uint)pthread_self());
 	int rv = rand()%10000;
 	double u = ((double)rv)/10000;
 	return -log(u)/lambda;
@@ -115,6 +115,7 @@ void *client_thread(void *arg1){
 	}*/
 	for(i = 0; i<snum; i++){
 		double tmp = exponential_gen(lambda);	// make the interval time to be exponential to make a Poisson distr
+		printf("[%d]sleep for %f sec...\n", tid, tmp);
 		int sec = (int)tmp;
 		int usec = ((int)(tmp*1000000))%1000000;
 		sleep(sec);
@@ -145,14 +146,14 @@ void *client_thread(void *arg1){
 		freeaddrinfo(servinfo);
 		for(j = 0; j < rnum; j++){
 			if(rand()%2 == 0){	// PUT command	
-				key = char_pool+rand()%79;
-				val = char_pool+rand()%79;
+				key = char_pool+rand()%80;
+				val = char_pool+rand()%80;
 				//memcpy(key,req+rand()%79,1);
 				//memcpy(val,req+rand()%79,1);
 				put(key,val,sockfd);
 				printf("[%d]put request: put <%c,%c>\n", tid, *key, *val);
 			}else{				// GET command
-				key = char_pool+rand()%79;
+				key = char_pool+rand()%80;
 				printf("[%d]get request: get %c\n", tid, *key);
 				v_t *tmpval = get(key,sockfd);
 			}
@@ -180,7 +181,7 @@ int main(int argc, char const *argv[])
 	int i;
 	pthread_t *p = malloc(thread_num*sizeof(pthread_t));
 	arg->iaddr = argv[1];
-	arg->lambda = (float)strtol(argv[3],NULL,10);
+	arg->lambda = (float)strtof(argv[3],NULL);
 	arg->nsession = (int)strtol(argv[4],NULL,10);
 	arg->nreq = (int)strtol(argv[5],NULL,10);
 

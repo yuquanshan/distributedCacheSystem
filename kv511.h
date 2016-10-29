@@ -1,6 +1,6 @@
 #include <stdlib.h>
 
-#define MAX_SESSIONS 10000
+#define MAX_SESSIONS 100
 #define HASH_ENTRY_SIZE 50
 #define BUFSIZE 1024
 
