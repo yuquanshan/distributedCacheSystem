@@ -45,9 +45,9 @@ node_t* get_node(k_t key, node_t *heads){	// find the node with key, return NULL
 	if((heads+entry*sizeof(node_t))->empty != 1){
 		tmp = (heads+entry*sizeof(node_t))->next;
 		while(tmp != NULL){
-			//printf("-------- met key %c\n",tmp->key);
+			printf("-------- met key %c\n",tmp->key);
 			if(tmp->key == key){
-				//printf("find key %c, its value is %c\n", key, tmp->val);
+				printf("find key %c, its value is %c\n", key, tmp->val);
 				return tmp;
 			}
 			tmp = tmp->next;
