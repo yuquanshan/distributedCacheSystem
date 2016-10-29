@@ -10,9 +10,13 @@
 #include<unordered_map>
 #include<string>
 
-#define MAXMSG 100
+#include <mutex>
+#include <shared_mutex>
+
+#define BUFSIZE 100
 
 std::unordered_map<std::string, std::string> map;
+std::mutex mutex;
 
 void *connection_handler(void *);
 
@@ -85,35 +89,41 @@ void *connection_handler(void *socket_desc)
     //Get the socket descriptor
     int sock = *(int*)socket_desc;
     int read_size;
-    char message[MAXMSG];
-    char client_message[MAXMSG];
-
+    char message[BUFSIZE];
+    char client_message[BUFSIZE];
+    std::string content, key, val;
 
     //Receive a message from client
-    while((read_size = recv(sock, client_message, MAXMSG, 0)) > 0)
+    while((read_size = recv(sock, client_message, BUFSIZE, 0)) > 0)
     {
         //Send the message back to client
-        std::string content(client_message, strlen(client_message));
+        content = std::string(client_message, strlen(client_message));
         puts(content.c_str());
 
-        std::string key(1, content[4]);
-        std::string val(1, content[5]);
+        key = std::string(1, content[4]);
+        val = std::string(1, content[5]);
 
         if (content[0] == 'G') { // get
             if (map.find(key) != map.end()) {
                 val = map[key];
                 strcpy(message, val.c_str());
-                write(sock , message , strlen(message));
+                mutex.lock();
+                write(sock, message, strlen(message));
+                mutex.unlock();
             }
             else {
                 strcpy(message, "Key error in Get()");
-                write(sock , message , strlen(message));
+                mutex.lock();
+                write(sock, message, strlen(message));
+                mutex.unlock();
             }
         }
         else { // put
+            mutex.lock();
             map[key] = val;
             strcpy(message, "Success in Put()");
             write(sock , message , strlen(message));
+            mutex.unlock();
         }
     }
 
