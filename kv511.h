@@ -64,6 +64,7 @@ void put_node(k_t key, v_t val, node_t *heads){
 	if(node != NULL){
 		node->val = val;
 	}else{
+		printf("need to create a new node...\n");
 		node = malloc(sizeof(node_t));
 		node->key = key;
 		node->val = val;
