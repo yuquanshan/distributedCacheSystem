@@ -12,6 +12,13 @@ typedef struct setnode{
 	struct setnode *next;
 } node_t;
 
+typedef struct thread_arg{	// input argument of client thread
+	int lambda;		// session poisson arrival rate
+	int nsession;	// number of sessions for each threads
+	int nreq;		// number of requests for each session
+	const char* iaddr;
+} arg_t;
+
 node_t* initialize_hashtable(){
 	node_t* heads = malloc(HASH_ENTRY_SIZE*sizeof(node_t));
 	int i;
@@ -29,21 +36,27 @@ int divhash_func(k_t key){	// very simple division-based hash
 }
 
 node_t* get_node(k_t key, node_t *heads){	// find the node with key, return NULL if no such node
+	printf("trying to get key %c...\n",key);
 	node_t* res = NULL;
 	int entry = divhash_func(key);
 	node_t* tmp;
 	if((heads+entry*sizeof(node_t))->empty != 1){
 		tmp = (heads+entry*sizeof(node_t))->next;
 		while(tmp != NULL){
-			if(tmp->key == key)
+			printf("-------- met key %c\n",tmp->key);
+			if(tmp->key == key){
+				printf("find key %c, its value is %c\n", key, tmp->val);
 				return tmp;
+			}
 			tmp = tmp->next;
 		}
 	}
+	printf("can't find key %c\n",key);
 	return res;
 }
 
 void put_node(k_t key, v_t val, node_t *heads){
+	printf("trying to put key-value pair: <%c,%c>...\n",key,val);
 	int entry = divhash_func(key);
 	node_t* node = get_node(key,heads);
 	if(node != NULL){
@@ -52,6 +65,7 @@ void put_node(k_t key, v_t val, node_t *heads){
 		node = malloc(sizeof(node_t));
 		node->key = key;
 		node->val = val;
+		node->next = NULL;
 		node_t* tmp = heads+entry*sizeof(node_t);
 		tmp->empty = 0;	// not empty no more
 		while(tmp->next != NULL){
