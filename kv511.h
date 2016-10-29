@@ -38,7 +38,7 @@ int divhash_func(k_t key){	// very simple division-based hash
 }
 
 node_t* get_node(k_t key, node_t *heads){	// find the node with key, return NULL if no such node
-	//printf("trying to get key %c...\n",key);
+	printf("trying to get key %c...\n",key);
 	node_t* res = NULL;
 	int entry = divhash_func(key);
 	node_t* tmp;
@@ -58,7 +58,7 @@ node_t* get_node(k_t key, node_t *heads){	// find the node with key, return NULL
 }
 
 void put_node(k_t key, v_t val, node_t *heads){
-	//printf("trying to put key-value pair: <%c,%c>...\n",key,val);
+	printf("trying to put key-value pair: <%c,%c>...\n",key,val);
 	int entry = divhash_func(key);
 	node_t* node = get_node(key,heads);
 	if(node != NULL){
