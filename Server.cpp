@@ -9,7 +9,8 @@
 
 #include<unordered_map>
 #include<string>
-#include<myclass.h>
+
+#define MAXMSG 100
 
 std::unordered_map<std::string, std::string> map;
 
@@ -17,8 +18,8 @@ void *connection_handler(void *);
 
 int main(int argc , char *argv[])
 {
-    int socket_desc , new_socket , c , *new_sock;
-    struct sockaddr_in server , client;
+    int socket_desc, new_socket, c , *new_sock;
+    struct sockaddr_in server, client;
     char *message;
 
     //Create socket
@@ -31,10 +32,10 @@ int main(int argc , char *argv[])
     //Prepare the sockaddr_in structure
     server.sin_family = AF_INET;
     server.sin_addr.s_addr = INADDR_ANY;
-    server.sin_port = htons( 8888 );
+    server.sin_port = htons(9088);
 
     //Bind
-    if( bind(socket_desc,(struct sockaddr *)&server , sizeof(server)) < 0)
+    if(bind(socket_desc,(struct sockaddr *)&server, sizeof(server)) < 0)
     {
         puts("bind failed");
         return 1;
@@ -42,12 +43,12 @@ int main(int argc , char *argv[])
     puts("bind done");
 
     //Listen
-    listen(socket_desc , 3);
+    listen(socket_desc, 3);
 
-    //Accept and incoming connection
+    //Accept an incoming connection
     puts("Waiting for incoming connections...");
     c = sizeof(struct sockaddr_in);
-    while( (new_socket = accept(socket_desc, (struct sockaddr *)&client, (socklen_t*)&c)) )
+    while((new_socket = accept(socket_desc, (struct sockaddr *)&client, (socklen_t*)&c)))
     {
         puts("Connection accepted");
 
@@ -55,14 +56,14 @@ int main(int argc , char *argv[])
         new_sock = (int*)malloc(sizeof(int));
         *new_sock = new_socket;
 
-        if( pthread_create( &sniffer_thread , NULL ,  connection_handler , (void*) new_sock) < 0)
+        if(pthread_create(&sniffer_thread, NULL,  connection_handler, (void*)new_sock) < 0)
         {
             perror("could not create thread");
             return 1;
         }
 
         //Now join the thread , so that we dont terminate before the thread
-        //pthread_join( sniffer_thread , NULL);
+        //pthread_join(sniffer_thread , NULL);
         puts("Handler assigned");
     }
 
@@ -72,6 +73,7 @@ int main(int argc , char *argv[])
         return 1;
     }
 
+    pthread_exit(NULL);
     return 0;
 }
 
@@ -83,29 +85,36 @@ void *connection_handler(void *socket_desc)
     //Get the socket descriptor
     int sock = *(int*)socket_desc;
     int read_size;
-    char message[1000];
-    char client_message[2000];
+    char message[MAXMSG];
+    char client_message[MAXMSG];
 
 
     //Receive a message from client
-    while( (read_size = recv(sock , client_message , 2000 , 0)) > 0 )
+    while((read_size = recv(sock, client_message, MAXMSG, 0)) > 0)
     {
         //Send the message back to client
         std::string content(client_message, strlen(client_message));
-        std::string request_type(content, 0, 1);
-        std::string key(content, 1, content.size()-1);
+        puts(content.c_str());
 
-        if (request_type == "P"){
+        std::string key(1, content[4]);
+        std::string val(1, content[5]);
+
+        if (content[0] == 'G') { // get
             if (map.find(key) != map.end()) {
-                std::string val = map[key];
+                val = map[key];
                 strcpy(message, val.c_str());
-                write(sock , message , strlen(client_message));
+                write(sock , message , strlen(message));
             }
             else {
-                
+                strcpy(message, "Key error in Get()");
+                write(sock , message , strlen(message));
             }
         }
-
+        else { // put
+            map[key] = val;
+            strcpy(message, "Success in Put()");
+            write(sock , message , strlen(message));
+        }
     }
 
     if(read_size == 0)
