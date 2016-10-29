@@ -73,6 +73,7 @@ void put_node(k_t key, v_t val, node_t *heads){
 		tmp->empty = 0;	// not empty no more
 		while(tmp->next != NULL){
 			tmp = tmp->next;
+			printf("yeepee!\n");
 		}
 		tmp->next = node;
 	}
