@@ -39,7 +39,11 @@ int get_or_put(const char* buf){	// return 0 if get, 1 if put, -1 if N/A
 }
 
 node_t* initialize_hashtable(){
+<<<<<<< HEAD
 	node_t* heads = (node_t*)malloc(HASH_ENTRY_SIZE*sizeof(node_t));
+=======
+	node_t* heads = (node_t *)malloc(HASH_ENTRY_SIZE*sizeof(node_t));
+>>>>>>> 4fdb96f5937c1cd3a81f00c41c78240f21dd86a1
 	int i;
 	node_t *tmp;
 	for(i = 0; i<HASH_ENTRY_SIZE; i++){	
@@ -106,6 +110,10 @@ void put_node(k_t key, v_t val, node_t *heads){
 		}
 		printf("not done yet...\n");
 		tmp->next = node;
+<<<<<<< HEAD
+		printf("done with %p!\n",node);
+	}*/
+=======
 	}
-	*/
+>>>>>>> 4fdb96f5937c1cd3a81f00c41c78240f21dd86a1
 }
