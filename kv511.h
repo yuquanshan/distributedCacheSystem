@@ -1,11 +1,13 @@
 #include <stdlib.h>
-
+#include <unordered_map>
 #define MAX_SESSIONS 100
 #define HASH_ENTRY_SIZE 50
 #define BUFSIZE 1024
 
 typedef char k_t;
 typedef char v_t;
+
+std::unordered_map<k_t,v_t> mmap;
 
 typedef struct setnode{
 	k_t key;
@@ -22,7 +24,7 @@ typedef struct thread_arg{	// input argument of client thread
 } arg_t;
 
 node_t* initialize_hashtable(){
-	node_t* heads = malloc(HASH_ENTRY_SIZE*sizeof(node_t));
+	node_t* heads = (node_t*)malloc(HASH_ENTRY_SIZE*sizeof(node_t));
 	int i;
 	node_t *tmp;
 	for(i = 0; i<HASH_ENTRY_SIZE; i++){	
@@ -38,13 +40,23 @@ int divhash_func(k_t key){	// very simple division-based hash
 }
 
 node_t* get_node(k_t key, node_t *heads){	// find the node with key, return NULL if no such node
-	printf("trying to get key %c...\n",key);
+	node_t* res = (node_t *)malloc(sizeof(node_t));
+	res->key = key;
+	res->val = mmap[key];
+	return res;
+	/*printf("trying to get key %c...\n",key);
 	node_t* res = NULL;
 	int entry = divhash_func(key);
+	printf("hash table entry is %d\n",entry);
 	node_t* tmp;
 	if((heads+entry*sizeof(node_t))->empty != 1){
 		tmp = (heads+entry*sizeof(node_t))->next;
+		printf("emm...\n");
 		while(tmp != NULL){
+			printf("humm...\n");
+			printf("-------- %p\n",tmp);
+			printf("-------- %c\n",tmp->empty);
+			printf("-------- %c\n",tmp->val);
 			printf("-------- met key %c\n",tmp->key);
 			if(tmp->key == key){
 				printf("find key %c, its value is %c\n", key, tmp->val);
@@ -54,12 +66,14 @@ node_t* get_node(k_t key, node_t *heads){	// find the node with key, return NULL
 		}
 	}
 	printf("can't find key %c\n",key);
-	return res;
+	return res;*/
 }
 
 void put_node(k_t key, v_t val, node_t *heads){
-	printf("trying to put key-value pair: <%c,%c>...\n",key,val);
+	mmap[key] = val;
+	/*printf("trying to put key-value pair: <%c,%c>...\n",key,val);
 	int entry = divhash_func(key);
+	printf("hash table entry is %d\n",entry);
 	node_t* node = get_node(key,heads);
 	if(node != NULL){
 		node->val = val;
@@ -74,7 +88,10 @@ void put_node(k_t key, v_t val, node_t *heads){
 		while(tmp->next != NULL){
 			tmp = tmp->next;
 			printf("yeepee!\n");
+			printf("-------- %p\n",tmp);
 		}
+		printf("not done yet...\n");
 		tmp->next = node;
-	}
+		printf("done with %p!\n",node);
+	}*/
 }
