@@ -21,6 +21,21 @@ typedef struct thread_arg{	// input argument of client thread
 	const char* iaddr;
 } arg_t;
 
+int get_or_put(const char* buf){	// return 0 if get, 1 if put, -1 if N/A
+	int i;
+	char *getstr = "GET";
+	char *putstr = "PUT";
+	char box[4];
+	box[3] = '\0';
+	strncpy(box,buf,3);
+	if(strcmp(box,getstr)==0){
+		return 0;
+	}else if(strcmp(box,putstr)==0){
+		return 1;
+	}
+	return -1;
+}
+
 node_t* initialize_hashtable(){
 	node_t* heads = malloc(HASH_ENTRY_SIZE*sizeof(node_t));
 	int i;
