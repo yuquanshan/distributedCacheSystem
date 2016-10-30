@@ -18,21 +18,6 @@ void *get_in_addr(struct sockaddr *sa){
 	return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
-int get_or_put(const char* buf){	// return 0 if get, 1 if put, -1 if N/A
-	int i;
-	char *getstr = "GET";
-	char *putstr = "PUT";
-	char box[4];
-	box[3] = '\0';
-	strncpy(box,buf,3);
-	if(strcmp(box,getstr)==0){
-		return 0;
-	}else if(strcmp(box,putstr)==0){
-		return 1;
-	}
-	return -1;
-}
-
 int main(int argc, char const *argv[]){
 	int session_counter = 0;
 	char msg[80];
