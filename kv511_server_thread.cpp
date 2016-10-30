@@ -86,22 +86,16 @@ void *pthread_function(void *socket_descriptor)
         parse = get_or_put(buf);
         if(parse == 0){ 	// get
             key = buf[4];
-            mutex.lock();
             res = get_node(key, heads);
-            mutex.unlock();
             if(res == NULL){
                 memset(msg,'\0',80);
                 sprintf(msg,"value of key %c not found",key);
-                mutex.lock();
                 write(sock, msg, strlen(msg));
-                mutex.unlock();
             }
             else{
                 memset(msg,'\0',80);
                 sprintf(msg,"value of key %c found: %c",key,res->val);
-                mutex.lock();
                 write(sock, msg, strlen(msg));
-                mutex.unlock();
             }
         }
         else if(parse == 1){ //put
@@ -110,16 +104,12 @@ void *pthread_function(void *socket_descriptor)
             mutex.unlock();
             memset(msg,'\0',80);
             sprintf(msg,"<key,value> pair updated: <%c,%c>",buf[4],buf[5]);
-            mutex.lock();
             write(sock, msg, strlen(msg));
-            mutex.unlock();
         }
         else{
             memset(msg,'\0',80);
             sprintf(msg,"invalid command! <%c,%c>",buf[4],buf[5]);
-            mutex.lock();
             write(sock, msg, strlen(msg));
-            mutex.unlock();
         }
     }
 
