@@ -2,7 +2,7 @@
 
 #define MAX_SESSIONS 100
 #define HASH_ENTRY_SIZE 50
-#define BUFSIZE 1024
+#define BUFSIZE 100
 
 typedef char k_t;
 typedef char v_t;
@@ -37,7 +37,7 @@ int get_or_put(const char* buf){	// return 0 if get, 1 if put, -1 if N/A
 }
 
 node_t* initialize_hashtable(){
-	node_t* heads = malloc(HASH_ENTRY_SIZE*sizeof(node_t));
+	node_t* heads = (node_t *)malloc(HASH_ENTRY_SIZE*sizeof(node_t));
 	int i;
 	node_t *tmp;
 	for(i = 0; i<HASH_ENTRY_SIZE; i++){	
@@ -79,8 +79,7 @@ void put_node(k_t key, v_t val, node_t *heads){
 	if(node != NULL){
 		node->val = val;
 	}else{
-		printf("need to create a new node...\n");
-		node = malloc(sizeof(node_t));
+		node = (node_t *)malloc(sizeof(node_t));
 		node->key = key;
 		node->val = val;
 		node->next = NULL;
