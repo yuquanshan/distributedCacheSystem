@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <unordered_map>
-#define MAX_SESSIONS 100
+#define MAX_SESSIONS 500
 #define HASH_ENTRY_SIZE 50
 #define BUFSIZE 100
 
@@ -55,10 +55,15 @@ int divhash_func(k_t key){	// very simple division-based hash
 }
 
 node_t* get_node(k_t key, node_t *heads){	// find the node with key, return NULL if no such node
-	node_t* res = (node_t *)malloc(sizeof(node_t));
-	res->key = key;
-	res->val = mmap[key];
-	return res;
+	std::unordered_map<k_t,v_t>::const_iterator got = mmap.find(key);
+	if(got == mmap.end()){
+		return NULL;
+	}else{
+		node_t* res = (node_t *)malloc(sizeof(node_t));
+		res->key = key;
+		res->val = mmap[key];
+		return res;
+	}
 	/*printf("trying to get key %c...\n",key);
 	node_t* res = NULL;
 	int entry = divhash_func(key);
